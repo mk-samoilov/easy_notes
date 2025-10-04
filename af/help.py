@@ -1,2 +1,4 @@
 from conf import COMMANDS_REGISTRY_FOR_HELP as COMMANDS_REGISTRY
 
+
+def

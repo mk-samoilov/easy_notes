@@ -19,7 +19,15 @@ class EACore:
 
     def init_db(self):
         self.db_api = DB(db_file=SQLITE_DB_FILE_PATH, bck=BASE_DB_CRYPT_KEY)
-        ir = self.db_api.init_db()
+
+        if self.db_api.db_is_exist():
+            master_key_is_new = False
+        else:
+            master_key_is_new = True
+
+        master_key = self.get_master_key(is_new=master_key_is_new)
+
+        ir = self.db_api.init_db(master_key=master_key)
 
         if type(ir) == str:
             log(lvl=ErrorLog(), content=ir)
@@ -29,9 +37,8 @@ class EACore:
         else:
             log(lvl=InfoLog(), content="Database initialized")
 
-    @staticmethod
-    def print_welcome_():
-        print("i:   Easy Notes v0.1")
+    def print_welcome_(self):
+        print(f"i:   Easy Notes v{self.version}")
         print("i: type 'github-repo' for print source code repository link")
         print("i: type 'help' for help")
         print(end="\n")
@@ -45,7 +52,7 @@ class EACore:
     def get_master_key(self, is_new: bool = True) -> str:
         log(lvl=HintLog(), content="The database (with notes) encrypted by master key")
 
-        prompt = "Enter master key: " if is_new else "Enter new master key for db: "
+        prompt = "enter master key: " if is_new else "enter new master key for db: "
 
         uc_master_key = self.get_input(prompt=prompt)
 
@@ -56,16 +63,16 @@ class EACore:
 
         return master_key
 
-    def process_command(self) -> (int, str):
+    def process_command(self) -> int:
         uc_command = self.get_input(prompt="")
         c_command = uc_command.strip().lower().replace("-", "_")
         f_command = c_command.strip(" ")
 
         if c_command == "":
-            return 0, "success"
+            return 0
 
-        module = import_module(name=f"af.{}", package=__package__)
-        return getattr(module, "main")(ci=self, command=c_command)
+        module = import_module(name=f"af.{f_command[0]}", package=__package__)
+        return getattr(module, "main")(self, c_command)
 
     @staticmethod
     def get_input(prompt: str = "> ") -> str:
